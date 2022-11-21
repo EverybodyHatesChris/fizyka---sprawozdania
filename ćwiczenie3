@@ -1,46 +1,247 @@
 import math as m
 
-def średnia():
-    x = 0
-    t = int(input("ilość średnia: "))
-    tp = t
-    while t != 0:
-        x += float(input())
-        t-=1
-    print(x/tp)
+def średnia_lepkość(tablica):
+    '''
+    funckja licząca średnią lepkość
+    wzór: średnia = suma_wyrazów/ilość_wyrazów
+    '''
+    print("η [śr]= " + str(round(((sum(tablica))/len(tablica)), 4)) + " Ns/m^2")
+    return (sum(tablica))/len(tablica)
 
-def sphere_objętość():
-    tabr = [3.51,5.19,6.11,10.71,7.86,5.56]
-    for r in tabr:
-        wynik = (4 * ((m.pi) * (r ** 3)) / 3)
-        return wynik
+def sphere_objętość(r):
+    '''
+    funkcja licząca objętość dowolnej kuli
+    wzór: 4/3 * pi * r^3
+    '''
+    # r jest zmienną przechowującą promień kuli
+    # promień kuli w zadaniu jest w mm
+    # żeby otrzymać wynik w metrach przemnażam promień przez 10^-3
+    # zwracany wynik jest w metrach!
+    r *= (10**(-3))
+    objętość = ((4/3) * (m.pi) * (r**3))
+    return objętość
 
-def gęstość():
-    tabm = [1.5,3.55,7.55,13.7,5.2,1.9]
-    for i in tabm:
-        return (i/sphere_objętość())
-
-def predkość_jednostajny():
-    tabt = [1.79,1.27,1.05,2.26,2.85,3.97]
-    s = 50
-    for t in tabt:
-        return (s/t)
-
-def lepkość():
-    tabr = [3.51,5.19,6.11,10.71,7.86,5.56]
-    gc = 1.26
-    srednia = 0
-    for r in tabr:
-        lepkosc = ((2*(r**2)*(9.81)*((gęstość())-gc))/(9*predkość_jednostajny()))
-        srednia += lepkosc
-    print(srednia/6)
-
-def nQ():
-    n = 0
-    suma = 0
-    tabm = [31.10, 31.2,31.15,31.3,31.4,31.2,31.3,31.2]
+def gęstość(tabm, tabr):
+    '''
+    funkcja licząca gęstośc dowolnej kulki
+    wzór: gęstość = masa/objętość
+    '''
+    #i będzie naszą pomocniczą zmienną
+    #pomoże nam wydobyć konkretne wartości
+    #z tablicy z promieniami
+    i = 0
+    #tabg będzie naszą pomocniczą tablicą przechowującą
+    #gęstości poszczególnych kulek
+    tabg =[]
     for m in tabm:
-        n+=1
-        suma += n*9.81*(m*(10**(-3)))
-        print(suma)
+        #zmienna wyciągana jest w gramach dlatego
+        #zamieniamy zmienną m na kilogramy
+        m *= (10**(-3))
+        #wzór na gęstość to masa/objętość zatem:
+        gęstość = m/sphere_objętość(tabr[i])
+        # linia poniżej przyda nam się później
+        # w niej zapisywane są wszystkie wartości gęstości
+        tabg.append(gęstość)
+        print("ρ[" + str(i+1) + "]= " + str(round(gęstość, 4)) + " kg/m^3")
+        i+=1
+    return tabg
 
+def predkość_jednostajny(tabt, s):
+    '''
+    funckja licząca prędkość kulek w ruchu jednostajnym
+    wzór: prędkość = droga/czas
+    '''
+    # w lepkości przydadzą nam się poszczególne prędkości średnie
+    # dlatego przygotuję sobie pomocniczą tablicę
+    # w której zapiszę wszystkie średnie prędkości
+    tabv = []
+    for t in tabt:
+        # mnożymy przez 10^-3 żeby zamienić cm na km
+        v = ((s * (10**(-3)))/t)
+        tabv.append(v)
+        print("Vśr = " + str(round(v, 4)) + " km/s")
+    # zwracana wartość to wszystkie policzone prędkości
+    # przyda nam się to później do policzenia prędkości
+    return (tabv)
+
+def lepkość(G, tabr, tabrg, tabv):
+    '''
+    funkcja licząca lepkość gliceryny
+    wzór: η = [2 x r^2 x G x (ρk -ρgl) ]/9 x v
+    legenda:
+    η - lepkość
+    r - promień [mm]
+    G - przyspieszenie ziemskie [m/s^2]
+    ρk - gęstość kulki [kg/m^3]
+    ρgl - gęstość gliceryny [kg/m^3]
+    v - prędkość [m/s]
+    '''
+    # przyda nam się pomocnicza zmienna
+    i = 0
+    # do późniejszego wyliczenia średniej
+    # z lepkości będziemy potrzebować tablicy - listy
+    # w której zapiszemy kolejne wyniki
+    tabl =[]
+    for r in tabr:
+        lepkość = (2*((r**2)*(10**(-3)))*(G)*(tabrg[i])) / (9 * tabv[i])
+        i += 1
+        tabl.append(lepkość)
+        print("η[" + str(i) +"]= " + str(round(lepkość, 4)) + " Ns/m^2")
+    return tabl
+
+def delta_pomiarów_wielokrotnych(tablica_pomoc = [7.04,7.0,7.02]):
+    '''
+    funkcja licząca delty pomiarów
+    wzór Δx = √[(Δx1^2 + ... + Δxn^2):(n-1)]
+    wzór Δxn = x̅ - xn
+    wzór x̅ = (x1 + ... + xn)/n
+    '''
+    średnia = ((sum(tablica_pomoc))/len(tablica_pomoc))
+    # ta tablica - lista będzie przechowywać delty wyliczone
+    # z przekazanej tablicy - listy
+    tabdtp = []
+    tabdtp.clear()
+    for wyraz in tablica_pomoc:
+        delta = średnia - wyraz
+        # w tablicy-liście zapisywane są od razu wyrazy
+        # podniesione do kwadratu co przyda się
+        # w późniejszym działaniu zwrotnym
+        tabdtp.append(delta**2)
+    # działanie zwrotne ze wzoru:
+    # Δx = √[(Δx1^2 + ... + Δxn^2):(n-1)]
+    return (m.sqrt(sum(tabdtp))/((len(tabdtp))-1))
+
+
+def błąd_względny():
+    '''
+    funkcja licząca błąd względny dla wybranej kulki
+    wzór:  Δη:η = √[([Δd:d]^2) + ([Δm:m]^2) + ([Δt:t]^2) + ([ΔL:L]^2)] = x)
+    -------------------------------------------
+    Legenda:
+    d - średnica kulki [mm]
+    m - masa kulki [g]
+    t - czas opadania kulki [s]
+    L - droga przebyta przez kulkę [mm]
+    -----Dane Wartości: -----------------
+    (Kulka metalowa mała)
+    L = 500 [mm]
+    ΔL = 1 [mm]
+    Δm = 1 [g]
+    m = 1,5 [g]
+    t = 1,79 [s]
+    dśr = 7.02 [m]
+    -----Szukane Wartości: --------------
+    Δd, Δt, x
+    ------------------------------------
+    Wzór po podstawieniu:
+    Δη:η = √[([Δd:7,02]^2) + ([0,05:1,5]^2) + ([Δt:1,79]^2) + ([1:500]^2)] = x
+    Δη:η = √[a x b x c x d] = x
+    a = ([Δd:7,02]^2)
+    b = ([0,05:1,5]^2)
+    c = ([Δt:1,79]^2)
+    d = ([1:500]^2)
+    '''
+    # w tych tablicach-listach zapisane są
+    # wartości pomiarów czasu (tp - czas pomiar)
+    # oraz średnicy (dp - średnica pomiar)
+    tabtp = [7.04,7.0,7.02]
+    tabdp = [1.84,1.78,1.75]
+    x = m.sqrt((((delta_pomiarów_wielokrotnych(tabdp))/((sum(tabdp))/len(tabdp)))**2)+((0.05/1.5)**2)+(((delta_pomiarów_wielokrotnych(tabtp))/((sum(tabtp))/len(tabtp)))**2)+((1/500)**2))
+    print(round(x, 4))
+    return x
+
+def błąd_bezwzględny(tabl, x):
+    '''
+    funkcja obliczająca błąd bezwzględny
+    wzór: Δη = η̅ * x
+    '''
+    print("Δη = " + (str(round((((sum(tabl))/(len(tabl))) * x), 4)) + " Ns/m^2"))
+    bbw = (((sum(tabl))/(len(tabl))) * x)
+    return float(bbw)
+
+def cyfry_znaczące(bbw, x, śrl):
+    '''
+    funkcja sprawdzająca cyfry znaczące
+    wzór: f = [(~bbw - bbw)/bbw] x 100%
+    jeśli f < 10% -> zaokrąglenie do 1 z lewej
+    jeśli f > 10% -> zaokrąglenie do 2 z lewej
+    --------------------------------------
+    legenda:
+    ~bbw - błąd bezwzględny w zaokrągleniu
+    bbw - błąd bezwzględny
+    '''
+    # będzie nam potrzebna pomocnicza zmienna
+    bbwp = bbw
+    i = 1
+    while bbwp > 10:
+        bbwp /= 10
+        bbw /= 10
+        i += 1
+
+    bbwp = round(bbwp)
+    sprawdzenie = ((bbwp - bbw)/bbw)*100
+    if  sprawdzenie < 10:
+        if (round(bbw, 1) * 10) == (round(bbw) * 10):
+            print("wynik = " + str(round(śrl, 1)) + " ± " + str(round(bbw, 1)) + "1")
+        else:
+            print("wynik = " + str(round(śrl, 1)) + " ± " + str(round(bbw, 1)))
+    else:
+        if (round(bbw, 2) * 10) == (round(bbw, 1) * 10):
+            print("wynik = " + str(round(śrl, 2)) + " ± " + str(round(bbw, 2)) + "1")
+        else:
+            print("wynik = " + str(round(śrl, 2)) + " ± " + str(round(bbw, 2)))
+
+
+def ćwiczenie_3():
+    '''stałe wartości zostały oznaczone wielkimi literami'''
+    #tablica z uśrednionymi promieniami kulek w centymetrach:
+    tabr = [3.51, 5.19, 6.11, 10.71, 7.86, 5.56]
+    #tablica z masami kulek w gramach:
+    tabm = [1.5, 3.55, 7.55, 13.7, 5.2, 1.9]
+    #tablica z uśrednionym czasem spadku każdej kulki w sekundach:
+    tabt = [1.79, 1.27, 1.05, 2.26, 2.85, 3.97]
+    #droga w centymetrach:
+    S = 50
+    #gęstość gliceryny:
+    PGL = 1261
+    #przyspieszenie ziemskie:
+    G = 9.81
+    '''Opracowanie danych:'''
+    #TODO: 1. Obliczyć średni: promień, gęstość, objętość czas i prędkość dla każdej kulki
+    #DONE
+    #TODO: 2. Dla każdej kulki wyznaczyć wartość lepkości
+    #DONE
+    #TODO: 3. Obliczyść średnią wartość lepkości
+    #DONE
+    #TODO: 4. Obliczyć błąd względny i bezwględny
+    #DONE
+    #TODO: 6. Sprwadzić cyfry znaczące i podać wynik końcowy
+    #DONE DONE DONE
+    print("-----------------------------------")
+    print("Średnia gęstość każej kulki: ")
+    tabg = gęstość(tabm, tabr)
+    print("-----------------------------------")
+    print("Średnia prędkość dla każdej kulki: ")
+    tabv = predkość_jednostajny(tabt, S)
+    print("-----------------------------------")
+    print("Lepkość każdej kulki: ")
+    # to działanie liczy różnicę gęstości (rg) między
+    # gęstością kulki a gliceryny, następnie
+    # spisuje wszystko na jednej tablicy/liście (tabrg)
+    tabrg = []
+    for g in tabg:
+        rg = g - PGL
+        tabrg.append(rg)
+    tabl = lepkość(G, tabr, tabrg, tabv)
+    print("-----------------------------------")
+    śrl = średnia_lepkość(tabl)
+    print("-----------------------------------")
+    print("Błąd względny: ")
+    x = błąd_względny()
+    print("-----------------------------------")
+    print("Błąd bezwzględny: ")
+    bbw = błąd_bezwzględny(tabl, x)
+    print("-----------------------------------")
+    print("Sprawdzam cyfry znaczące: ")
+    cyfry_znaczące(bbw, x, śrl)
+ćwiczenie_3()
